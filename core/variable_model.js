@@ -22,19 +22,18 @@
  * @fileoverview Components for the variable model.
  * @author marisaleung@google.com (Marisa Leung)
  */
-'use strict';
+"use strict";
 
-goog.provide('Blockly.VariableModel');
+goog.provide("Blockly.VariableModel");
 
-goog.require('Blockly.Events.VarCreate');
-goog.require('Blockly.utils');
-
+goog.require("Blockly.Events.VarCreate");
+goog.require("Blockly.utils");
 
 /**
  * Class for a variable model.
  * Holds information for the variable including name, ID, and type.
  * @param {!Blockly.Workspace} workspace The variable's workspace.
- * @param {string} name The name of the variable. This must be unique across
+ * @param {!string} name The name of the variable. This must be unique across
  *     variables and procedures.
  * @param {string=} opt_type The type of the variable like 'int' or 'string'.
  *     Does not need to be unique. Field_variable can filter variables based on
@@ -44,7 +43,7 @@ goog.require('Blockly.utils');
  * @see {Blockly.FieldVariable}
  * @constructor
  */
-Blockly.VariableModel = function(workspace, name, opt_type, opt_id) {
+Blockly.VariableModel = function(workspace, name, opt_type, opt_id, opt_scope) {
   /**
    * The workspace the variable is in.
    * @type {!Blockly.Workspace}
@@ -66,7 +65,7 @@ Blockly.VariableModel = function(workspace, name, opt_type, opt_id) {
    * @see {Blockly.FieldVariable}
    * @type {string}
    */
-  this.type = opt_type || '';
+  this.type = opt_type || "";
 
   /**
    * A unique id for the variable. This should be defined at creation and
@@ -77,16 +76,39 @@ Blockly.VariableModel = function(workspace, name, opt_type, opt_id) {
    */
   this.id_ = opt_id || Blockly.utils.genUid();
 
+  /**
+   * @Jonas Knerr
+   *  True if a Instance gets set to a class
+   */
+  this.typeSet = false;
+
+  /**
+   * @Jonas Knerr
+   * Sets scope to
+   */
+  this.scope = opt_scope || "global";
+
   Blockly.Events.fire(new Blockly.Events.VarCreate(this));
 };
 
 /**
- * @return {string} The ID for the variable.
+ * @return {!string} The ID for the variable.
  */
 Blockly.VariableModel.prototype.getId = function() {
   return this.id_;
 };
-
+/*
+ * @Jonas Knerr
+ */
+Blockly.VariableModel.prototype.getScope = function() {
+  return this.scope;
+};
+/*
+ * @Jonas Knerr
+ */
+Blockly.VariableModel.prototype.setScope = function(scope) {
+  this.scope = scope;
+};
 /**
  * A custom compare function for the VariableModel objects.
  * @param {Blockly.VariableModel} var1 First variable to compare.

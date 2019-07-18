@@ -22,25 +22,86 @@
  * @fileoverview Generating JavaScript for variable blocks.
  * @author fraser@google.com (Neil Fraser)
  */
-'use strict';
+"use strict";
 
-goog.provide('Blockly.JavaScript.variables');
+goog.provide("Blockly.JavaScript.variables");
 
-goog.require('Blockly.JavaScript');
+goog.require("Blockly.JavaScript");
 
-
-Blockly.JavaScript['variables_get'] = function(block) {
+Blockly.JavaScript["variables_get"] = function(block) {
   // Variable getter.
-  var code = Blockly.JavaScript.variableDB_.getName(block.getFieldValue('VAR'),
-      Blockly.Variables.NAME_TYPE);
+  //@Jonas Knerr
+  var code = "";
+
+  var name = Blockly.JavaScript.variableDB_.getName(
+    block.getFieldValue("VAR"),
+    Blockly.Variables.NAME_TYPE
+  );
+
+  var opt_type = block.varType || "";
+  var varBlock = block.workspace.getVariable(name, opt_type);
+
+  if (varBlock.getScope() != "global") {
+    code = "this." + name;
+  } else {
+    code = name;
+  }
   return [code, Blockly.JavaScript.ORDER_ATOMIC];
 };
 
-Blockly.JavaScript['variables_set'] = function(block) {
-  // Variable setter.
-  var argument0 = Blockly.JavaScript.valueToCode(block, 'VALUE',
-      Blockly.JavaScript.ORDER_ASSIGNMENT) || '0';
-  var varName = Blockly.JavaScript.variableDB_.getName(
-      block.getFieldValue('VAR'), Blockly.Variables.NAME_TYPE);
-  return varName + ' = ' + argument0 + ';\n';
+Blockly.JavaScript["variables_set"] = function(block) {
+  // Variable setter.#  var code = "";
+  var opt_type = block.varType || "";
+  var name = Blockly.JavaScript.variableDB_.getName(
+    block.getFieldValue("VAR"),
+    Blockly.Variables.NAME_TYPE
+  );
+  var varBlock = block.workspace.getVariable(name, opt_type);
+
+  var argument0 =
+    Blockly.JavaScript.valueToCode(block, "VALUE", Blockly.JavaScript.ORDER_ASSIGNMENT) || "0";
+
+  if (varBlock.getScope() != "global") {
+    return "this." + name + " = " + argument0 + ";\n";
+  } else {
+    return name + " = " + argument0 + ";\n";
+  }
+};
+
+//@Jonas Knerr
+
+Blockly.JavaScript["object_variables_get"] = function(block) {
+  var opt_type = block.varType || "";
+  var instanceName = Blockly.JavaScript.variableDB_.getName(
+    block.getFieldValue("VAR"),
+    Blockly.Variables.NAME_TYPE
+  );
+  var methodName = block.getCurrentMethod();
+  var blocks = block.workspace.getAllBlocks(false);
+  var methodBlock;
+
+  for (var i = 0; i < blocks.length; i++) {
+    if (blocks[i].getProcedureDef) {
+      if (blocks[i].getProcedureDef()[0] == methodName) {
+        methodBlock = blocks[i];
+      }
+    }
+  }
+  if (block.typeOfValue == "method") {
+    var args = [];
+    for (var i = 0; i < block.args; i++) {
+      args[i] =
+        Blockly.JavaScript.valueToCode(block, "ARG" + i, Blockly.JavaScript.ORDER_COMMA) || "null";
+    }
+    var code = instanceName + "." + methodName + "(" + args.join(", ") + ")";
+  } else {
+    var code = instanceName + "." + methodName;
+    return [code, Blockly.JavaScript.ORDER_ATOMIC];
+  }
+  if (block.isReturn) {
+    return [code, Blockly.JavaScript.ORDER_ATOMIC];
+  } else {
+    code += ";\n";
+    return code;
+  }
 };
